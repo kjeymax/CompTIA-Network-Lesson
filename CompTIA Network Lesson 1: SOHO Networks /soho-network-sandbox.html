@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SOHO Network Sandbox - Interactive Learning</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #00d4ff33;
+  }
+  h1 {
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+  }
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab {
+    padding: 12px 24px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid #00d4ff44;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    color: #aaa;
+  }
+  .tab:hover { background: rgba(0,212,255,0.1); color: #fff; }
+  .tab.active {
+    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    color: #000;
+    border-color: #00d4ff;
+    box-shadow: 0 0 20px #00d4ff88;
+  }
+  .lab {
+    display: none;
+    background: rgba(0,0,0,0.5);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid #00d4ff33;
+    min-height: 500px;
+  }
+  .lab.active { display: block; animation: fadeIn 0.5s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+  h2 { color: #00d4ff; margin-bottom: 15px; }
+  h3 { color: #ff00ea; margin: 15px 0 10px; }
+  p { line-height: 1.6; margin-bottom: 10px; }
+
+  /* Lab 1: Network Builder */
+  .network-workspace {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    gap: 20px;
+    min-height: 400px;
+  }
+  .device-pool, .device-target {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px dashed #00d4ff44;
+  }
+  .device {
+    background: linear-gradient(135deg, #1a1a3a, #2a2a5a);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    cursor: grab;
+    border: 2px solid #00d4ff55;
+    text-align: center;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .device:hover { transform: scale(1.05); border-color: #00d4ff; box-shadow: 0 0 15px #00d4ff55; }
+  .device.placed { opacity: 0.4; cursor: not-allowed; }
+  .device .icon { font-size: 2em; display: block; margin-bottom: 5px; }
+  .slots { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+  .slot {
+    width: 180px;
+    height: 100px;
+    border: 2px dashed #ff00ea55;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,0,234,0.05);
+    position: relative;
+  }
+  .slot.filled { border-style: solid; border-color: #00ff88; background: rgba(0,255,136,0.1); }
+  .slot.wrong { border-color: #ff4444; background: rgba(255,68,68,0.1); animation: shake 0.5s; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+  .slot-label { position: absolute; top: -12px; background: #302b63; padding: 2px 10px; border-radius: 5px; font-size: 0.8em; color: #ff00ea; }
+  .connector { color: #00d4ff; font-size: 1.5em; }
+  .status-bar {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    border-left: 4px solid #00d4ff;
+  }
+  .status-bar.success { border-color: #00ff88; }
+  .status-bar.error { border-color: #ff4444; }
+
+  /* Lab 2: Router Config */
+  .router-panel {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 25px;
+    border: 2px solid #00d4ff44;
+  }
+  .config-step {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border-left: 4px solid #555;
+  }
+  .config-step.done { border-color: #00ff88; background: rgba(0,255,136,0.05); }
+  .config-step.warning { border-color: #ffaa00; background: rgba(255,170,0,0.05); }
+  .config-step label { display: block; margin-bottom: 8px; color: #00d4ff; font-weight: bold; }
+  .config-step input, .config-step select {
+    width: 100%;
+    padding: 10px;
+    background: #0f0c29;
+    border: 1px solid #00d4ff44;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1em;
+  }
+  .config-step input:focus, .config-step select:focus { outline: none; border-color: #00d4ff; }
+  .hint { font-size: 0.85em; color: #ff00ea; margin-top: 5px; }
+  .btn {
+    padding: 12px 24px;
+    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px #00d4ff55; }
+  .btn.danger { background: linear-gradient(90deg, #ff4444, #cc0000); color: #fff; }
+  .btn.success { background: linear-gradient(90deg, #00ff88, #00cc66); }
+
+  /* Lab 3: Wi-Fi Standards */
+  .wifi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+  }
+  .wifi-card {
+    background: linear-gradient(135deg, #1a1a3a, #2a2a5a);
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #00d4ff44;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+  .wifi-card:hover { transform: translateY(-5px); border-color: #00d4ff; }
+  .wifi-card.selected { border-color: #ff00ea; box-shadow: 0 0 25px #ff00ea88; }
+  .wifi-card .standard { font-size: 1.5em; font-weight: bold; color: #00d4ff; }
+  .wifi-card .speed { font-size: 2em; color: #ff00ea; margin: 10px 0; }
+  .wifi-card .freq { color: #aaa; font-size: 0.9em; }
+  .challenge-box {
+    background: rgba(255,0,234,0.1);
+    border: 2px solid #ff00ea;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Lab 4: Attack Simulator */
+  .attack-scenario {
+    background: rgba(255,68,68,0.1);
+    border: 2px solid #ff4444;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+  }
+  .attack-visual {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 20px 0;
+    min-height: 150px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+  }
+  .actor {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    min-width: 100px;
+  }
+  .actor .emoji { font-size: 3em; }
+  .packet {
+    position: absolute;
+    font-size: 1.5em;
+    animation: flow 2s infinite;
+  }
+  @keyframes flow {
+    0% { left: 25%; opacity: 0; }
+    50% { opacity: 1; }
+    100% { left: 65%; opacity: 0; }
+  }
+
+  /* Lab 5: Quiz */
+  .quiz-question {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  .quiz-option {
+    padding: 12px;
+    margin: 8px 0;
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #00d4ff33;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover { background: rgba(0,212,255,0.1); border-color: #00d4ff; }
+  .quiz-option.correct { background: rgba(0,255,136,0.2); border-color: #00ff88; }
+  .quiz-option.wrong { background: rgba(255,68,68,0.2); border-color: #ff4444; }
+  .score-display {
+    text-align: center;
+    font-size: 1.5em;
+    padding: 15px;
+    background: linear-gradient(90deg, #00d4ff22, #ff00ea22);
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    transition: width 0.5s;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎮 SOHO Network Sandbox</h1>
+    <p>Interactive Learning Workspace • 5 Hands-On Labs</p>
+    <div class="progress-bar"><div class="progress-fill" id="globalProgress" style="width:0%"></div></div>
+    <p id="progressText">Progress: 0 / 5 Labs Completed</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchLab(0)">🔌 Lab 1: Build Network</div>
+    <div class="tab" onclick="switchLab(1)">⚙️ Lab 2: Configure Router</div>
+    <div class="tab" onclick="switchLab(2)">📡 Lab 3: Wi-Fi Standards</div>
+    <div class="tab" onclick="switchLab(3)">🥷 Lab 4: Attack Simulator</div>
+    <div class="tab" onclick="switchLab(4)">🏆 Lab 5: Final Quiz</div>
+  </div>
+
+  <!-- LAB 1: NETWORK BUILDER -->
+  <div class="lab active">
+    <h2>🔌 Lab 1: Build a SOHO Network</h2>
+    <p>Drag the correct devices into the correct slots to build a working SOHO network. Remember: ISP → Modem → Router → WAP → Laptop</p>
+    <div class="network-workspace">
+      <div class="device-pool">
+        <h3>Available Devices</h3>
+        <div class="device" draggable="true" data-device="modem" onclick="selectDevice(this)">
+          <span class="icon">📡</span>Modem
+        </div>
+        <div class="device" draggable="true" data-device="router" onclick="selectDevice(this)">
+          <span class="icon">🌐</span>Router
+        </div>
+        <div class="device" draggable="true" data-device="wap" onclick="selectDevice(this)">
+          <span class="icon">📶</span>WAP
+        </div>
+        <div class="device" draggable="true" data-device="switch" onclick="selectDevice(this)">
+          <span class="icon">🔀</span>Switch
+        </div>
+        <div class="device" draggable="true" data-device="laptop" onclick="selectDevice(this)">
+          <span class="icon">💻</span>Laptop
+        </div>
+      </div>
+      <div class="slots">
+        <div class="slot" data-slot="0" onclick="placeDevice(this)">
+          <span class="slot-label">Step 1: ISP Connection</span>
+          <span class="placeholder">?</span>
+        </div>
+        <div class="connector">⬇️ RJ45 Cable</div>
+        <div class="slot" data-slot="1" onclick="placeDevice(this)">
+          <span class="slot-label">Step 2: Traffic Director</span>
+          <span class="placeholder">?</span>
+        </div>
+        <div class="connector">⬇️ Ethernet Cable</div>
+        <div class="slot" data-slot="2" onclick="placeDevice(this)">
+          <span class="slot-label">Step 3: Wi-Fi Broadcast</span>
+          <span class="placeholder">?</span>
+        </div>
+        <div class="connector">⬇️ Wireless Signal</div>
+        <div class="slot" data-slot="3" onclick="placeDevice(this)">
+          <span class="slot-label">Step 4: Client Device</span>
+          <span class="placeholder">?</span>
+        </div>
+      </div>
+      <div class="device-target">
+        <h3>📋 Instructions</h3>
+        <p style="font-size:0.9em">Click a device, then click a slot to place it.</p>
+        <p style="font-size:0.9em; margin-top:10px"><strong>Correct Order:</strong></p>
+        <ol style="font-size:0.85em; padding-left:20px; line-height:1.8">
+          <li>Modem</li>
+          <li>Router</li>
+          <li>WAP</li>
+          <li>Laptop</li>
+        </ol>
+        <button class="btn danger" onclick="resetLab1()" style="margin-top:15px; width:100%">🔄 Reset</button>
+      </div>
+    </div>
+    <div class="status-bar" id="lab1Status">
+      <strong>🎯 Status:</strong> Click a device to select it, then click a slot to place it.
+    </div>
+  </div>
+
+  <!-- LAB 2: ROUTER CONFIG -->
+  <div class="lab">
+    <h2>⚙️ Lab 2: Configure Your Router</h2>
+    <p>You just bought a new router. Out of the box, it's INSECURE! Complete all 5 security steps to pass this lab.</p>
+    <div class="router-panel">
+      <div class="config-step" id="step1">
+        <label>1️⃣ Change Default Admin Password</label>
+        <input type="password" id="adminPass" placeholder="Current: admin (change this!)">
+        <div class="hint">⚠️ Default passwords like "admin" are cracked in seconds using Rainbow Tables!</div>
+      </div>
+      <div class="config-step" id="step2">
+        <label>2️⃣ Change Default Router IP</label>
+        <input type="text" id="routerIP" placeholder="Current: 192.168.0.1">
+        <div class="hint">⚠️ Avoid IP conflicts! Change to something unique like 192.168.2.1</div>
+      </div>
+      <div class="config-step" id="step3">
+        <label>3️⃣ Set a Unique SSID (Network Name)</label>
+        <input type="text" id="ssid" placeholder="Current: Linksys-5G4A">
+        <div class="hint">💡 Don't use your real name or address! Be creative.</div>
+      </div>
+      <div class="config-step" id="step4">
+        <label>4️⃣ Choose Wireless Encryption</label>
+        <select id="encryption">
+          <option value="">-- Select --</option>
+          <option value="wep">WEP (Insecure - crackable in minutes)</option>
+          <option value="wpa">WPA (Vulnerable)</option>
+          <option value="wpa2">WPA2 (Good - industry standard)</option>
+          <option value="wpa3">WPA3 (Best - most secure)</option>
+          <option value="open">Open (NO encryption - NEVER use)</option>
+        </select>
+        <div class="hint">🔒 Always choose the strongest encryption your devices support.</div>
+      </div>
+      <div class="config-step" id="step5">
+        <label>5️⃣ Guest Network</label>
+        <select id="guest">
+          <option value="">-- Select --</option>
+          <option value="disable">Disable (Recommended if not needed)</option>
+          <option value="enable">Enable (Only if you have guests)</option>
+        </select>
+        <div class="hint">🚪 Every open SSID is another potential entry point for hackers.</div>
+      </div>
+      <button class="btn success" onclick="validateRouter()" style="width:100%; margin-top:15px">✅ Apply Configuration</button>
+    </div>
+    <div class="status-bar" id="lab2Status">
+      <strong>🎯 Status:</strong> Complete all 5 security configurations.
+    </div>
+  </div>
+
+  <!-- LAB 3: WI-FI STANDARDS -->
+  <div class="lab">
+    <h2>📡 Lab 3: Wi-Fi Standards Explorer</h2>
+    <div class="challenge-box">
+      <strong>🎯 Challenge:</strong> A homeowner needs a WAP with speeds up to <strong>600 Mbps</strong> that is <strong>backward compatible with 2.4 GHz</strong> devices. Which standard should they choose?
+    </div>
+    <p>Click each standard to learn more. Then select your answer below.</p>
+    <div class="wifi-grid">
+      <div class="wifi-card" onclick="selectWifi(this, 'a')">
+        <div class="standard">802.11a</div>
+        <div class="speed">54 Mbps</div>
+        <div class="freq">5 GHz only</div>
+      </div>
+      <div class="wifi-card" onclick="selectWifi(this, 'b')">
+        <div class="standard">802.11b</div>
+        <div class="speed">11 Mbps</div>
+        <div class="freq">2.4 GHz only</div>
+      </div>
+      <div class="wifi-card" onclick="selectWifi(this, 'g')">
+        <div class="standard">802.11g</div>
+        <div class="speed">54 Mbps</div>
+        <div class="freq">2.4 GHz only</div>
+      </div>
+      <div class="wifi-card" onclick="selectWifi(this, 'n')">
+        <div class="standard">802.11n</div>
+        <div class="speed">600 Mbps</div>
+        <div class="freq">2.4 & 5 GHz</div>
+      </div>
+      <div class="wifi-card" onclick="selectWifi(this, 'ac')">
+        <div class="standard">802.11ac</div>
+        <div class="speed">1.3 Gbps</div>
+        <div class="freq">5 GHz only</div>
+      </div>
+      <div class="wifi-card" onclick="selectWifi(this, 'ax')">
+        <div class="standard">802.11ax</div>
+        <div class="speed">9.6 Gbps</div>
+        <div class="freq">2.4, 5, 6 GHz</div>
+      </div>
+    </div>
+    <div style="margin-top:20px; text-align:center">
+      <button class="btn" onclick="checkWifiAnswer()">🎯 Submit Answer</button>
+      <button class="btn danger" onclick="resetLab3()">🔄 Reset</button>
+    </div>
+    <div class="status-bar" id="lab3Status" style="margin-top:20px">
+      <strong>🎯 Status:</strong> Explore the standards, then submit your answer.
+    </div>
+  </div>
+
+  <!-- LAB 4: ATTACK SIMULATOR -->
+  <div class="lab">
+    <h2>🥷 Lab 4: Attack Simulator</h2>
+    <p>See how hackers attack SOHO networks. Click each scenario to visualize the attack.</p>
+    
+    <div class="attack-scenario">
+      <h3>🎣 Evil Twin Attack</h3>
+      <p>A hacker sets up a fake Wi-Fi with the SAME name as your coffee shop's network.</p>
+      <div class="attack-visual">
+        <div class="actor"><div class="emoji">☕</div><div>Real AP<br>"CoffeeShop"</div></div>
+        <div class="actor"><div class="emoji">🥷</div><div>Evil Twin<br>"CoffeeShop"</div></div>
+        <div class="actor"><div class="emoji">📱</div><div>Your Phone<br>(auto-connects!)</div></div>
+      </div>
+      <button class="btn" onclick="showDefense('evil')">🛡️ Show Defense</button>
+      <div id="defense-evil" style="display:none; margin-top:15px; padding:15px; background:rgba(0,255,136,0.1); border-radius:8px">
+        <strong>✅ Defense:</strong> Verify the exact SSID, use WPA3, never auto-connect to public networks, use a VPN.
+      </div>
+    </div>
+
+    <div class="attack-scenario">
+      <h3>🔨 Brute Force Attack</h3>
+      <p>Software tries every password combination: aaaa, aaab, aaac... at lightning speed using a botnet.</p>
+      <div class="attack-visual">
+        <div class="actor"><div class="emoji">🤖</div><div>Botnet<br>(1000s of PCs)</div></div>
+        <div class="packet">🔑</div>
+        <div class="actor"><div class="emoji">🔒</div><div>Your Router<br>admin123</div></div>
+      </div>
+      <button class="btn" onclick="showDefense('brute')">🛡️ Show Defense</button>
+      <div id="defense-brute" style="display:none; margin-top:15px; padding:15px; background:rgba(0,255,136,0.1); border-radius:8px">
+        <strong>✅ Defense:</strong> Long complex passwords (12+ chars), account lockout after 5 failed attempts, MFA.
+      </div>
+    </div>
+
+    <div class="attack-scenario">
+      <h3>🎣 Phishing Attack</h3>
+      <p>Hacker sends fake email pretending to be your bank, asking for your password.</p>
+      <div class="attack-visual">
+        <div class="actor"><div class="emoji">🎣</div><div>Hacker<br>fake@bank.com</div></div>
+        <div class="packet">📧</div>
+        <div class="actor"><div class="emoji">👤</div><div>You<br>(tricked!)</div></div>
+      </div>
+      <button class="btn" onclick="showDefense('phish')">🛡️ Show Defense</button>
+      <div id="defense-phish" style="display:none; margin-top:15px; padding:15px; background:rgba(0,255,136,0.1); border-radius:8px">
+        <strong>✅ Defense:</strong> Check sender email carefully, never click suspicious links, verify via official channels, user training.
+      </div>
+    </div>
+
+    <div class="attack-scenario">
+      <h3>🚪 Tailgating (Physical)</h3>
+      <p>Attacker walks closely behind an authorized employee through a secure door.</p>
+      <div class="attack-visual">
+        <div class="actor"><div class="emoji">👨‍💼</div><div>Employee<br>(authorized)</div></div>
+        <div class="actor"><div class="emoji">🥷</div><div>Attacker<br>(tailgating!)</div></div>
+        <div class="actor"><div class="emoji">🚪</div><div>Secure Door</div></div>
+      </div>
+      <button class="btn" onclick="showDefense('tail')">🛡️ Show Defense</button>
+      <div id="defense-tail" style="display:none; margin-top:15px; padding:15px; background:rgba(0,255,136,0.1); border-radius:8px">
+        <strong>✅ Defense:</strong> Mantrap (access control vestibule) - forces one person at a time, each must badge in separately.
+      </div>
+    </div>
+  </div>
+
+  <!-- LAB 5: QUIZ -->
+  <div class="lab">
+    <h2>🏆 Lab 5: Final Challenge Quiz</h2>
+    <div class="score-display">
+      Score: <span id="score">0</span> / <span id="total">5</span>
+    </div>
+    <div id="quizContainer"></div>
+    <div style="text-align:center; margin-top:20px">
+      <button class="btn" onclick="resetQuiz()">🔄 Restart Quiz</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global state
+  let labsCompleted = [false, false, false, false, false];
+  let selectedDevice = null;
+  let lab1Slots = {};
+  let selectedWifi = null;
+  let quizScore = 0;
+  let currentQuestion = 0;
+
+  const quizQuestions = [
+    {
+      q: "What is the FIRST thing you should do when setting up a new SOHO router?",
+      options: ["Change the SSID", "Change the default admin password", "Enable WPA3", "Disable guest access"],
+      correct: 1,
+      explain: "Default passwords are cracked in seconds using Rainbow Tables. Always change admin password FIRST!"
+    },
+    {
+      q: "Which physical security device PREVENTS vehicles from ramming into a building?",
+      options: ["Security cameras", "Motion sensors", "Bollards", "Alarms"],
+      correct: 2,
+      explain: "Bollards are concrete/metal posts that PHYSICALLY stop vehicles. Cameras/alarms only DETECT, they don't stop."
+    },
+    {
+      q: "A mantrap (access control vestibule) prevents which attack?",
+      options: ["Phishing", "Tailgating", "Brute force", "Evil twin"],
+      correct: 1,
+      explain: "Mantraps force one person at a time to badge in separately, preventing tailgating."
+    },
+    {
+      q: "Which wireless encryption is MOST secure?",
+      options: ["WEP", "WPA", "WPA2", "WPA3"],
+      correct: 3,
+      explain: "WPA3 is the newest and most secure. WEP is crackable in minutes, never use it!"
+    },
+    {
+      q: "An attacker sets up a fake Wi-Fi with the same SSID as your office. This is called:",
+      options: ["Phishing", "Evil Twin", "Spoofing", "Tailgating"],
+      correct: 1,
+      explain: "An Evil Twin is a rogue access point mimicking a legitimate network to steal credentials."
+    }
+  ];
+
+  function updateProgress() {
+    const completed = labsCompleted.filter(x => x).length;
+    document.getElementById('globalProgress').style.width = (completed / 5 * 100) + '%';
+    document.getElementById('progressText').textContent = `Progress: ${completed} / 5 Labs Completed`;
+  }
+
+  function switchLab(n) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
+    document.querySelectorAll('.lab').forEach((l, i) => l.classList.toggle('active', i === n));
+  }
+
+  // LAB 1
+  function selectDevice(el) {
+    if (el.classList.contains('placed')) return;
+    document.querySelectorAll('.device').forEach(d => d.style.borderColor = '#00d4ff55');
+    el.style.borderColor = '#ff00ea';
+    selectedDevice = el.dataset.device;
+    document.getElementById('lab1Status').innerHTML = `<strong>✅ Selected:</strong> ${el.textContent.trim()}. Now click a slot to place it.`;
+  }
+
+  function placeDevice(slot) {
+    if (!selectedDevice) {
+      document.getElementById('lab1Status').innerHTML = `<strong>⚠️ Warning:</strong> Select a device first!`;
+      document.getElementById('lab1Status').className = 'status-bar error';
+      return;
+    }
+    const slotNum = slot.dataset.slot;
+    if (lab1Slots[slotNum]) return;
+    
+    const correctOrder = ['modem', 'router', 'wap', 'laptop'];
+    const isCorrect = correctOrder[slotNum] === selectedDevice;
+    
+    const icons = { modem: '📡', router: '🌐', wap: '📶', laptop: '💻', switch: '🔀' };
+    
+    if (isCorrect) {
+      slot.innerHTML = `<span class="slot-label">Step ${parseInt(slotNum)+1}</span><span style="font-size:2em">${icons[selectedDevice]}</span><br>${selectedDevice.toUpperCase()}`;
+      slot.classList.add('filled');
+      lab1Slots[slotNum] = selectedDevice;
+      document.querySelector(`.device[data-device="${selectedDevice}"]`).classList.add('placed');
+      document.getElementById('lab1Status').innerHTML = `<strong>✅ Correct!</strong> ${selectedDevice.toUpperCase()} placed in slot ${parseInt(slotNum)+1}.`;
+      document.getElementById('lab1Status').className = 'status-bar success';
+    } else {
+      slot.classList.add('wrong');
+      setTimeout(() => slot.classList.remove('wrong'), 500);
+      document.getElementById('lab1Status').innerHTML = `<strong>❌ Wrong!</strong> ${selectedDevice.toUpperCase()} doesn't go here. Try again.`;
+      document.getElementById('lab1Status').className = 'status-bar error';
+    }
+    selectedDevice = null;
+    document.querySelectorAll('.device').forEach(d => d.style.borderColor = '#00d4ff55');
+    
+    if (Object.keys(lab1Slots).length === 4) {
+      labsCompleted[0] = true;
+      updateProgress();
+      document.getElementById('lab1Status').innerHTML = `<strong>🎉 LAB COMPLETE!</strong> You built a working SOHO network!`;
+    }
+  }
+
+  function resetLab1() {
+    lab1Slots = {};
+    selectedDevice = null;
+    document.querySelectorAll('.slot').forEach(s => {
+      s.classList.remove('filled', 'wrong');
+      s.innerHTML = `<span class="slot-label">Step ${parseInt(s.dataset.slot)+1}</span><span class="placeholder">?</span>`;
+    });
+    document.querySelectorAll('.device').forEach(d => d.classList.remove('placed'));
+    document.getElementById('lab1Status').innerHTML = `<strong>🎯 Status:</strong> Click a device to select it, then click a slot.`;
+    document.getElementById('lab1Status').className = 'status-bar';
+  }
+
+  // LAB 2
+  function validateRouter() {
+    const pass = document.getElementById('adminPass').value;
+    const ip = document.getElementById('routerIP').value;
+    const ssid = document.getElementById('ssid').value;
+    const enc = document.getElementById('encryption').value;
+    const guest = document.getElementById('guest').value;
+    
+    let issues = [];
+    
+    // Step 1
+    if (!pass || pass === 'admin' || pass === 'password' || pass.length < 8) {
+      document.getElementById('step1').className = 'config-step warning';
+      issues.push('Use a strong password (8+ chars, not "admin")');
+    } else {
+      document.getElementById('step1').className = 'config-step done';
+    }
+    
+    // Step 2
+    if (!ip || ip === '192.168.0.1' || ip === '192.168.1.1') {
+      document.getElementById('step2').className = 'config-step warning';
+      issues.push('Change the default IP to avoid conflicts');
+    } else {
+      document.getElementById('step2').className = 'config-step done';
+    }
+    
+    // Step 3
+    if (!ssid || ssid === 'Linksys-5G4A' || ssid.toLowerCase().includes('default')) {
+      document.getElementById('step3').className = 'config-step warning';
+      issues.push('Set a unique SSID (not the default)');
+    } else {
+      document.getElementById('step3').className = 'config-step done';
+    }
+    
+    // Step 4
+    if (!enc || enc === 'wep' || enc === 'wpa' || enc === 'open') {
+      document.getElementById('step4').className = 'config-step warning';
+      issues.push('Choose WPA2 or WPA3 encryption');
+    } else {
+      document.getElementById('step4').className = 'config-step done';
+    }
+    
+    // Step 5
+    if (!guest) {
+      document.getElementById('step5').className = 'config-step warning';
+      issues.push('Decide on guest network access');
+    } else {
+      document.getElementById('step5').className = 'config-step done';
+    }
+    
+    if (issues.length === 0) {
+      document.getElementById('lab2Status').innerHTML = `<strong>🎉 LAB COMPLETE!</strong> Your router is now SECURE! All 5 steps passed.`;
+      document.getElementById('lab2Status').className = 'status-bar success';
+      labsCompleted[1] = true;
+      updateProgress();
+    } else {
+      document.getElementById('lab2Status').innerHTML = `<strong>⚠️ Issues found:</strong><ul style="margin-top:10px; padding-left:20px">${issues.map(i => `<li>${i}</li>`).join('')}</ul>`;
+      document.getElementById('lab2Status').className = 'status-bar error';
+    }
+  }
+
+  // LAB 3
+  function selectWifi(el, standard) {
+    document.querySelectorAll('.wifi-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedWifi = standard;
+    const info = {
+      a: "5 GHz only, 54 Mbps. Not backward compatible with 2.4 GHz.",
+      b: "2.4 GHz only, 11 Mbps. Too slow!",
+      g: "2.4 GHz only, 54 Mbps. Too slow for 600 Mbps requirement.",
+      n: "✅ 2.4 & 5 GHz, 600 Mbps. Backward compatible with a/b/g!",
+      ac: "5 GHz only. Not backward compatible with 2.4 GHz devices.",
+      ax: "Fastest, but overkill for the 600 Mbps requirement."
+    };
+    document.getElementById('lab3Status').innerHTML = `<strong>ℹ️ ${standard.toUpperCase()}:</strong> ${info[standard]}`;
+  }
+
+  function checkWifiAnswer() {
+    if (!selectedWifi) {
+      document.getElementById('lab3Status').innerHTML = `<strong>⚠️</strong> Select an answer first!`;
+      return;
+    }
+    if (selectedWifi === 'n') {
+      document.getElementById('lab3Status').innerHTML = `<strong>🎉 CORRECT!</strong> 802.11n offers 600 Mbps AND is backward compatible with 2.4 GHz (a/b/g).`;
+      document.getElementById('lab3Status').className = 'status-bar success';
+      labsCompleted[2] = true;
+      updateProgress();
+    } else {
+      document.getElementById('lab3Status').innerHTML = `<strong>❌ Not quite.</strong> Remember: needs 600 Mbps + 2.4 GHz backward compatibility. Try again!`;
+      document.getElementById('lab3Status').className = 'status-bar error';
+    }
+  }
+
+  function resetLab3() {
+    selectedWifi = null;
+    document.querySelectorAll('.wifi-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('lab3Status').innerHTML = `<strong>🎯 Status:</strong> Explore the standards, then submit your answer.`;
+    document.getElementById('lab3Status').className = 'status-bar';
+  }
+
+  // LAB 4
+  function showDefense(type) {
+    const el = document.getElementById('defense-' + type);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    if (el.style.display === 'block' && !labsCompleted[3]) {
+      labsCompleted[3] = true;
+      updateProgress();
+    }
+  }
+
+  // LAB 5
+  function renderQuiz() {
+    const container = document.getElementById('quizContainer');
+    if (currentQuestion >= quizQuestions.length) {
+      container.innerHTML = `<div class="quiz-question" style="text-align:center">
+        <h2>🎉 Quiz Complete!</h2>
+        <p style="font-size:1.5em; margin:20px 0">Final Score: ${quizScore} / ${quizQuestions.length}</p>
+        <p>${quizScore === quizQuestions.length ? '🏆 PERFECT! You are a SOHO master!' : quizScore >= 3 ? '👍 Good job! Review the missed questions.' : '📚 Keep studying! Review the lesson.'}</p>
+      </div>`;
+      if (quizScore >= 3) {
+        labsCompleted[4] = true;
+        updateProgress();
+      }
+      return;
+    }
+    const q = quizQuestions[currentQuestion];
+    container.innerHTML = `
+      <div class="quiz-question">
+        <h3>Question ${currentQuestion + 1} of ${quizQuestions.length}</h3>
+        <p style="font-size:1.1em; margin:15px 0">${q.q}</p>
+        ${q.options.map((opt, i) => `<div class="quiz-option" onclick="answerQuiz(${i})">${opt}</div>`).join('')}
+      </div>
+    `;
+  }
+
+  function answerQuiz(i) {
+    const q = quizQuestions[currentQuestion];
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((opt, idx) => {
+      opt.onclick = null;
+      if (idx === q.correct) opt.classList.add('correct');
+      if (idx === i && i !== q.correct) opt.classList.add('wrong');
+    });
+    if (i === q.correct) {
+      quizScore++;
+      document.getElementById('score').textContent = quizScore;
+    }
+    setTimeout(() => {
+      alert((i === q.correct ? '✅ Correct! ' : '❌ Wrong. ') + q.explain);
+      currentQuestion++;
+      renderQuiz();
+    }, 800);
+  }
+
+  function resetQuiz() {
+    quizScore = 0;
+    currentQuestion = 0;
+    document.getElementById('score').textContent = 0;
+    renderQuiz();
+  }
+
+  // Initialize
+  renderQuiz();
+</script>
+</body>
+</html>

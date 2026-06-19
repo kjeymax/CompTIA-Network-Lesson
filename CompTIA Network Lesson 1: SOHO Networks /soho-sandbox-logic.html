@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOHO Network Logic Sandbox</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --text: #c9d1d9;
+            --accent: #58a6ff;
+            --success: #2ea043;
+            --error: #f85149;
+            --border: #30363d;
+            --terminal-bg: #010409;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+        }
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 1.1rem;
+        }
+
+        .challenge-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .challenge-card h2 {
+            color: var(--accent);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .scenario {
+            background-color: var(--terminal-bg);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .question-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #f0f6fc;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: #0d1117;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background-color: #79c0ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(88, 166, 255, 0.3);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+        }
+
+        .feedback.success {
+            background-color: rgba(46, 160, 67, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            display: block;
+        }
+
+        .feedback.error {
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            display: block;
+        }
+
+        .terminal-log {
+            background-color: var(--terminal-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 40px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-log h3 {
+            color: var(--success);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        .log-info { color: var(--accent); }
+
+        .rule-box {
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px dashed var(--error);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #ffa198;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>> SOHO_LOGIC_SANDBOX.exe</h1>
+        <p class="subtitle">Interactive Troubleshooting & Security Deduction Workspace</p>
+    </header>
+
+    <!-- CHALLENGE 1 -->
+    <div class="challenge-card">
+        <h2>MODULE 1: The IP Conflict Protocol</h2>
+        <div class="scenario">
+            <strong>NETWORK STATE:</strong><br>
+            Router LAN IP: 192.168.1.1 | Subnet Mask: 255.255.255.0 (/24)<br>
+            Network Printer: Static IP 192.168.1.50<br>
+            DHCP Pool Range: 192.168.1.2 to 192.168.1.254<br>
+            <strong>CURRENT EVENT:</strong> The DHCP server has already issued addresses up to .49. A new smartphone connects to the Wi-Fi.
+        </div>
+
+        <div class="question-group">
+            <label>1. What logically happens to the network?</label>
+            <select id="q1-event">
+                <option value="">-- Analyze and Select Outcome --</option>
+                <option value="a">The phone receives 192.168.1.51. Both devices work perfectly.</option>
+                <option value="b">The phone receives 192.168.1.50. An IP Conflict occurs, and both the printer and phone lose connectivity.</option>
+                <option value="c">The router detects the static IP and automatically skips .50, assigning the phone 192.168.1.51.</option>
+            </select>
+        </div>
+
+        <div class="question-group">
+            <label>2. What is the most logical, permanent fix that doesn't require reconfiguring the printer?</label>
+            <select id="q1-fix">
+                <option value="">-- Analyze and Select Fix --</option>
+                <option value="a">Change the Router's LAN IP to 192.168.2.1 to create a new subnet.</option>
+                <option value="b">Change the Subnet Mask to 255.255.0.0 to expand the available IP pool.</option>
+                <option value="c">Change the DHCP Pool Start IP to 192.168.1.100.</option>
+            </select>
+        </div>
+
+        <button onclick="checkChallenge1()">Run Logic Check</button>
+        <div id="feedback1" class="feedback"></div>
+    </div>
+
+    <!-- CHALLENGE 2 -->
+    <div class="challenge-card">
+        <h2>MODULE 2: The Threat Actor Matrix</h2>
+        <div class="scenario">
+            <strong>SECURITY LOG ANALYSIS:</strong><br>
+            We have intercepted 3 distinct attack vectors. Deduce the exact CompTIA terminology for each methodology based on the attacker's behavior.
+        </div>
+
+        <div class="question-group">
+            <label>LOG 1: Attacker places a malicious QR code on a physical poster in the lobby asking employees to "Scan for Free Coffee".</label>
+            <select id="q2-1">
+                <option value="">-- Select Attack Vector --</option>
+                <option value="smishing">Smishing</option>
+                <option value="vishing">Vishing</option>
+                <option value="quishing">Quishing</option>
+                <option value="evil">Evil Twin</option>
+            </select>
+        </div>
+
+        <div class="question-group">
+            <label>LOG 2: Attacker calls the Helpdesk pretending to be the CEO, demanding an immediate password reset for their email.</label>
+            <select id="q2-2">
+                <option value="">-- Select Attack Vector --</option>
+                <option value="whaling">Whaling</option>
+                <option value="vishing">Vishing</option>
+                <option value="spear">Spear Phishing</option>
+                <option value="phishing">Phishing</option>
+            </select>
+        </div>
+
+        <div class="question-group">
+            <label>LOG 3: Attacker sets up a rogue Wi-Fi router in the parking lot with the SSID "Company_Guest_Free" (identical to the real one).</label>
+            <select id="q2-3">
+                <option value="">-- Select Attack Vector --</option>
+                <option value="phishing">Phishing</option>
+                <option value="evil">Evil Twin</option>
+                <option value="quishing">Quishing</option>
+                <option value="dumpster">Dumpster Diving</option>
+            </select>
+        </div>
+
+        <button onclick="checkChallenge2()">Run Logic Check</button>
+        <div id="feedback2" class="feedback"></div>
+    </div>
+
+    <!-- CHALLENGE 3 -->
+    <div class="challenge-card">
+        <h2>MODULE 3: The Physical Defense Budget</h2>
+        <div class="rule-box">
+            ⚠️ CRITICAL RULE: You must select a security measure that <u>PHYSICALLY STOPS</u> the threat. Alarms, cameras, and sensors only <u>DETECT or DETER</u>; they do not physically stop an attacker.
+        </div>
+        <div class="scenario">
+            <strong>BUDGET:</strong> $5,000<br>
+            <strong>AVAILABLE INVENTORY:</strong> Bollards ($200), Mantrap ($4,000), Kensington Lock ($40), Security Camera ($150), Motion Sensor ($50), Alarm ($100).
+        </div>
+
+        <div class="question-group">
+            <label>THREAT A: A vehicle might accidentally (or maliciously) ram into the external server room generator.</label>
+            <select id="q3-a">
+                <option value="">-- Select Physical Defense --</option>
+                <option value="bollard">Bollards ($200)</option>
+                <option value="camera">Security Camera ($150)</option>
+                <option value="alarm">Alarm System ($100)</option>
+            </select>
+        </div>
+
+        <div class="question-group">
+            <label>THREAT B: An unauthorized person tries to slip in behind an employee through the server room door (Tailgating).</label>
+            <select id="q3-b">
+                <option value="">-- Select Physical Defense --</option>
+                <option value="mantrap">Mantrap / Access Control Vestibule ($4,000)</option>
+                <option value="magnetometer">Magnetometer / Metal Detector ($500)</option>
+                <option value="motion">Motion Sensor ($50)</option>
+            </select>
+        </div>
+
+        <div class="question-group">
+            <label>THREAT C: A thief tries to walk out with a company laptop from an open lobby desk.</label>
+            <select id="q3-c">
+                <option value="">-- Select Physical Defense --</option>
+                <option value="kensington">Kensington Lock / Cable Lock ($40)</option>
+                <option value="guard">Security Guard ($2,000)</option>
+                <option value="camera">Security Camera ($150)</option>
+            </select>
+        </div>
+
+        <button onclick="checkChallenge3()">Run Logic Check</button>
+        <div id="feedback3" class="feedback"></div>
+    </div>
+
+    <!-- TERMINAL LOG -->
+    <div class="terminal-log">
+        <h3>> SYSTEM_CONSOLE_LOG</h3>
+        <div id="log-container">
+            <div class="log-entry log-info">[SYSTEM] Sandbox initialized. Awaiting user input...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addLog(message, type) {
+        const logContainer = document.getElementById('log-container');
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function showFeedback(id, isCorrect, message) {
+        const fb = document.getElementById(id);
+        fb.className = `feedback ${isCorrect ? 'success' : 'error'}`;
+        fb.textContent = message;
+    }
+
+    function checkChallenge1() {
+        const event = document.getElementById('q1-event').value;
+        const fix = document.getElementById('q1-fix').value;
+        
+        if (event === 'b' && fix === 'c') {
+            showFeedback('feedback1', true, "✅ LOGIC VERIFIED. \n\nDeduction: The DHCP pool includes .50. Since the server has only issued up to .49, the next available IP is exactly .50. This causes an IP Conflict, dropping both devices. \n\nFix Logic: Changing the Router LAN IP breaks the entire subnet. Changing the Subnet Mask doesn't resolve the overlap. Changing the DHCP Start IP to .100 safely bypasses the static .50 address, reserving the lower range for static devices.");
+            addLog("MODULE 1: PASSED. IP Conflict resolved logically.", "success");
+        } else {
+            showFeedback('feedback1', false, "❌ LOGIC FAILURE. \n\nHint: Remember that DHCP servers are 'dumb'—they don't know which IPs are statically assigned unless you tell them (by adjusting the pool range). If the pool is .2 to .254, it WILL eventually hand out .50. \n\nAlso, remember that changing a Router's LAN IP changes the entire subnet, which would disconnect every device on the network!");
+            addLog("MODULE 1: FAILED. Review DHCP vs Static IP logic.", "error");
+        }
+    }
+
+    function checkChallenge2() {
+        const q1 = document.getElementById('q2-1').value;
+        const q2 = document.getElementById('q2-2').value;
+        const q3 = document.getElementById('q2-3').value;
+
+        if (q1 === 'quishing' && q2 === 'vishing' && q3 === 'evil') {
+            showFeedback('feedback2', true, "✅ THREAT PROFILE MATCHED. \n\n1. Quishing: Phishing via QR codes (even if delivered via SMS or physical posters). \n2. Vishing: Phishing over Voice/Phone calls. \n3. Evil Twin: A rogue AP broadcasting an identical SSID to trick users into connecting.");
+            addLog("MODULE 2: PASSED. Threat actor methodology identified.", "success");
+        } else {
+            showFeedback('feedback2', false, "❌ INCORRECT DEDUCTION. \n\nReview the prefixes:\n- V-ishing = Voice (Phone call)\n- S-mishing = SMS (Text message)\n- Qu-ishing = QR Code\n- Evil Twin = Rogue Wi-Fi AP with identical SSID\n- Whaling = Targeting 'Big Fish' (CEOs), but Vishing is the specific delivery method used in Log 2.");
+            addLog("MODULE 2: FAILED. Attack vector mismatch.", "error");
+        }
+    }
+
+    function checkChallenge3() {
+        const a = document.getElementById('q3-a').value;
+        const b = document.getElementById('q3-b').value;
+        const c = document.getElementById('q3-c').value;
+
+        if (a === 'bollard' && b === 'mantrap' && c === 'kensington') {
+            showFeedback('feedback3', true, "✅ PHYSICAL SECURITY ESTABLISHED. \n\nTotal Cost: $4,240 (Under Budget). \n\nLogic: \n- Bollards physically stop vehicles from ramming objects. \n- Mantraps (vestibules) physically prevent tailgating by requiring individual authentication in a confined space. \n- Kensington locks physically tether laptops to desks. \n\nRemember: Cameras, alarms, and motion sensors DO NOT physically stop an intruder; they only detect or deter them!");
+            addLog("MODULE 3: PASSED. Physical perimeter secured.", "success");
+        } else {
+            showFeedback('feedback3', false, "❌ SECURITY BREACH DETECTED. \n\nDid you select a Camera, Alarm, or Motion Sensor? \n\nCRITICAL RULE: These devices only DETECT or DETER. They do not PHYSICALLY STOP an attacker. \n- To stop a vehicle: You need a physical barrier (Bollards). \n- To stop tailgating: You need a physical containment system (Mantrap). \n- To stop laptop theft: You need a physical tether (Kensington Lock).");
+            addLog("MODULE 3: FAILED. Physical security requirements not met.", "error");
+        }
+    }
+</script>
+
+</body>
+</html>
